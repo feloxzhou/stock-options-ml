@@ -1,0 +1,99 @@
+---
+title: "C183 - Project 3"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r}
+data <- read.table("http://www.stat.ucla.edu/~nchristo/statistics_c183_c283/statc183c283_5stocks.txt", header=T)
+head(data)
+
+#Returns
+r1 <- (data$P1[-length(data$P1)]-data$P1[-1])/data$P1[-1]
+r2 <- (data$P2[-length(data$P2)]-data$P2[-1])/data$P2[-1]
+r3 <- (data$P3[-length(data$P3)]-data$P3[-1])/data$P3[-1]
+r4 <- (data$P4[-length(data$P4)]-data$P4[-1])/data$P4[-1]
+r5 <- (data$P5[-length(data$P5)]-data$P5[-1])/data$P5[-1]
+
+#Means & Variance-covariance matrix
+x <- as.data.frame(cbind(r1,r2,r3,r4,r5))
+
+colMeans(x)
+cov(x)
+
+#P1 & P5; Composition; Expected Return and Standard deviation
+
+pm1 <- (var(r5)-cov(r1,r5))/(var(r1)+var(r5)-2*cov(r1,r5))
+pm2 <- 1-pm1
+
+rbar <- pm1*mean(r1)+pm2*mean(r5)
+var_p <- pm1^2*var(r1)+pm2^2*var(r5)+2*pm1*pm2*cov(r1,r5)
+sd <- var_p^0.5
+
+
+#
+z <- 1 - seq(0,1,0.1)
+rb <- seq(0,1,0.1)*mean(r1) * z *mean(r5)
+vp <- (seq(0,1,0.1))^2 * var(r1) + z * var(r5) + 2 * seq(0,1,0.1) * z *cov(r1,r5)
+sdp <- vp^0.5
+
+plot(sdp,rb, type = "l",
+     xlab=expression(sigma[p]),
+     ylab=expression(bar), 
+     main = "Portfoli possibility curve")
+
+#Identify the efficient frontier:
+ef <- as.data.frame(cbind(sdp,rb))
+points(ef[ef$rb>rbar,], col="red", type="l")
+
+#XOM MCD BA
+
+a <- read.table("http://www.stat.ucla.edu/~nchristo/datac183c283/statc183c283_abc.txt", header=T)
+
+sd_total <- (a$a^2 * var(r1) + a$b^2 * var(r4) + a$c^2 * var(r5) + 2 * a$a * a$b *cov(r1,r4) + 2 * a$a * a$c * cov(r1,r5) + 2 * a$b * a$c * cov(r4,r5))^0.5
+
+rp2 <- a$a * mean(r1) + a$b * mean(r4) + a$c * mean(r5)
+
+
+plot(sd_total, rp2)
+
+
+#R1 
+
+data <- as.data.frame(cbind(r1,r4,r5))
+data_means <- colMeans(data)
+datam <- as.matrix(data_means)
+
+r <- datam - 0.001
+
+cvi <- solve(cov(data))
+
+z <- cvi %*% r
+x <- z/sum(z)
+
+rg <- t(x) %*% data_means
+vg <- t(x) %*% cov(data) %*% x
+sdg <- (t(x) %*% cov(data) %*% x)^0.5
+
+s <- (rg-0.001)/sdg
+
+segments(0,0.001,sdg,rg)
+points(sdg, rg, cex = 1, pch = 1)
+
+r2 <- 0.6*rg + 0.4 * 0.001
+sd_G <- 0.6 * r2
+
+points(sd_G, r2, cex = 1, pch = 19)
+
+x2 <- as.data.frame(cbind(r1,r4,r5))
+r3 <- as.matrix(colMeans(x2)) - 0.002
+
+x3 <- (solve(cov(x2)))/sum(solve(cov(x2)))
+vb <- t(x3) %*% cov(x2) %*% x3
+cAB <- t(x) %*% cov(x2) %*% x3
+
+
+#xA <- (vb - cAB)/(vb + vg - 2 *cAB))
+
+```
